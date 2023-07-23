@@ -1,0 +1,1 @@
+"C:\Users\magaegjf\AppData\Local\Microsoft\WindowsApps\python.exe" "D:\IBD.GIT\Python\Automatizaciones\src\script_auto_01.py"
