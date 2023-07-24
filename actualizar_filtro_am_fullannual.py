@@ -6,13 +6,6 @@ import openpyxl
 #from openpyxl import load_workbook
 from contextlib import nullcontext
 
-# General terminology translation
-#Dataframe-worksheet
-#series-column
-#index-row headings
-#row-row
-#NaN - empty cell
-
 
 
 #Funcion copiado hojas excel con backup
@@ -20,7 +13,7 @@ def cp_Excel_bck(rOrig, fOrig, shOrig, rDest, fDest, shDest): # noqa: E999
     stError = False
     resultado = ""
     fBackup = fDest + '_v1'
-    #1 paso) Backup del fichero filtro de origen
+    #1 paso) Backup del fichero filtro destino
     try:
         src_file = os.path.join(rDest, fDest)   #Fichero origen
         dst_file = os.path.join(rDest, fBackup)    #Fichero destino
