@@ -103,19 +103,12 @@ def cp_Excel_bck( mi_parametros ): # noqa: E999
             stError = True
         else:
             # Load Excel File and give path to your file
-            #try:
             datosLec = {}
             datosLec = cargar_datos_desde_excel(src_file, shOrig)
             resultado = "Correcto, Carga archivo origen"
             stError = False
             print(resultado + ' ' + fOrig)
-            #except FileNotFoundError:
-            #    print(f"¡Error! No se encontró el archivo de origen o destino: {src_file}.")    
-            #except Exception as e:
-            #    print(f"¡Error! Ocurrió un problema: {e}")
-            #    print(F"Error, Step-2, no se pudo abrir el fichero origen: {src_file} ,con pestaña: {shOrig}, datosLec: {datosLec}")
-            #    resultado = "Error carga archivo origen"
-            #    stError = True
+
                
     else:
         resultado = "Error, Nombre vacio fichero origen/ruta origen/pestaña origen"
@@ -123,7 +116,6 @@ def cp_Excel_bck( mi_parametros ): # noqa: E999
 
     #3 paso) Escritura del df en un archivo excel
     if fDest is not nullcontext and shDest is not nullcontext and not stError:
-        #try:
         datosEsc = {}
         dst_file = os.path.join(rDest, fDest)
         datosEsc[shDest] = datosLec[shOrig]
@@ -132,13 +124,7 @@ def cp_Excel_bck( mi_parametros ): # noqa: E999
         #df_Filtro.to_excel(dst_file, sheet_name = shDest, index=False)
         resultado = "Correcto, Escribe archivo destino"
         stError = False
-        #except FileNotFoundError:
-        #    print("¡Error! No se encontró el archivo de origen o destino.")    
-        #except Exception as e:
-        #    print(f"¡Error! Ocurrió un problema: {e}")
-        #    print(f"Error, no se pudo grabar el archivo destino, fichero destino: {dst_file} ,pestaña:{shDest}")
-        #    resultado = "Error escritura archivo destino"
-        #    stError = True
+
     else:
         resultado = "Incorrecto, hubo algun problema"
         print(resultado + ' ' + dst_file)
@@ -158,6 +144,7 @@ def main():
 
     parametros = leer_parametros(fparametros)
 
+    # Paso 1. Carga parametros fichero
     #Parametros leidos de fichero
     for ruta in parametros:
         if "RUTA_ARCHIVO_DESCARGAS" == ruta:
@@ -177,6 +164,7 @@ def main():
         if "PEST_TRELLO_DESTINO" == ruta:
             pest_dst_trello = str(parametros["PEST_TRELLO_DESTINO"]).strip()
 
+    # Paso 2.- Preparar la gestión del filtro
     #1a ejecución con Filtro
     fNombreOrigen = str(input("Introduzca nombre fichero origen (filtro): "))
     fSrcOrigen = ruta_archivo_descargas + fNombreOrigen + ".xlsx"
@@ -195,11 +183,11 @@ def main():
     }
 
     #Informar el diccionario
-    prm_cp_bck["rOrig"] = ruta_archivo_descargas
+    prm_cp_bck["rOrig"] = ruta_archivo_descargas    #parametro del fichero
     prm_cp_bck["fOrig"] = fSrcOrigen
     prm_cp_bck["shOrig"] = src_hoja
-    prm_cp_bck["rDest"] = ruta_archivo_filtros 
-    prm_cp_bck["fDest"] = nombre_dst_filtro
+    prm_cp_bck["rDest"] = ruta_archivo_filtros      #parametro del fichero
+    prm_cp_bck["fDest"] = nombre_dst_filtro         #parametro del fichero
     prm_cp_bck["shDest"] = dst_hoja
 
     #prm_cp_bck["rOrig"].append(ruta_archivo_descargas)
@@ -222,21 +210,22 @@ def main():
     #                        fDest = nombre_dst_filtro, shDest = dst_hoja)
     stResultadoErr = cp_Excel_bck( prm_cp_bck)
     print(f'Resultado de copiar_planillas_backup: stResultadoErr = {stResultadoErr}')
-        
+
+    #Paso 3.- Preparar la gestión del fichero Trello    
     stContinuar = str(input("Desea continuar (S/N): "))
     if (stContinuar.strip() == "S") or (stContinuar.strip() == "s"):
 
         fNombreOrigenTrello = str(input("Introduzca nombre fichero origen (trello): "))
-        fSrcOrigen = ruta_archivo_descargas + fNombreOrigen + ".xlsx"
+        fSrcOrigen = ruta_archivo_descargas + fNombreOrigenTrello + ".xlsx"
         src_hoja = pest_src_trello.strip()
         dst_hoja = pest_dst_trello.strip()
 
         #Informar el diccionario de parametros
-        prm_cp_bck["rOrig"] = ruta_archivo_descargas
+        prm_cp_bck["rOrig"] = ruta_archivo_descargas    #parametro del fichero
         prm_cp_bck["fOrig"] = fSrcOrigen
         prm_cp_bck["shOrig"] = src_hoja
-        prm_cp_bck["rDest"] = ruta_archivo_filtros 
-        prm_cp_bck["fDest"] = nombre_dst_trello
+        prm_cp_bck["rDest"] = ruta_archivo_filtros      #parametro del fichero
+        prm_cp_bck["fDest"] = nombre_dst_trello         #parametro del fichero
         prm_cp_bck["shDest"] = dst_hoja
 
         for llave in prm_cp_bck:
