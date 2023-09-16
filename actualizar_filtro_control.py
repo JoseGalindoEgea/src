@@ -1,3 +1,4 @@
+from cgi import print_arguments
 import os
 from pydoc import stripid
 import shutil
@@ -34,15 +35,26 @@ def leer_parametros(archivo_parametros):
 
 #ESPECIFICAS
 #Funcion: cargar_datos_desde_excel(origen, pestañas)
-def cargar_datos_desde_excel(origen, pestañas):
+def cargar_datos_desde_excel(origen, pestaña):
     try:
+        print(f'cargar_datos_desde_excel- Recibido - origen: {origen} pestaña: {pestaña}')
         datos = {}
-        for Mypestaña in pestañas:
+        if (pestaña is not nullcontext):
+            print(f'cargar_datos_desde_excel- Inicio carga excel con pestaña: {pestaña}')
             #Lectura archivo excel con un data frame (panda) según pestaña
-            df = pd.read_excel(origen, sheet_name=Mypestaña)
+            df = pd.read_excel(origen, sheet_name=pestaña)
             #devolvemos un vector con df por cada pestaña
-            datos[Mypestaña] = df
+            datos[pestaña] = df
+            print(f'cargar_datos_desde_excel- Cargada excel con pestaña: {pestaña}')
+            blError = False
+        else:
+            print(f'cargar_datos_desde_excel- Error - sin información de pestaña')
+            blError = True
+
+        if not blError:
+            print(f"cargar_datos_desde_excel: Correcto, carga desde excel archivo: {origen} pestaña: {pestaña}.")
         return datos
+    
     except FileNotFoundError:
         print(f"cargar_datos_desde_excel: Error, El archivo {origen} no se encontró.")
 
@@ -155,38 +167,44 @@ def cp_Excel_bck( mi_parametros ):
         
         #Backup archivo origen
         stError = archive_backup(src_file, dst_file)
+        print(f"cp_Excel_bck: Step1, realizado backup del archivo: {src_file}")
     else:
         stError = True
    
     #2 paso) Obtener el fichero origen
     if fOrig is not nullcontext and rOrig is not nullcontext and shOrig is not nullcontext and not stError:
-        print("cp_Excel_bck, Step1, Fichero origen: ", fOrig)
+        print("cp_Excel_bck, Step2, Fichero origen: ", fOrig)
         src_file = os.path.join(rOrig, fOrig)
         if not os.path.exists(src_file):
             print(f"cp_Excel_bck: Error, el fichero origen no existe: {src_file}")
-            resultado = "cp_Excel_bck: Error, el fichero origen no existe"
+            resultado = "cp_Excel_bck: Step2.1, Error, el fichero origen no existe"
             stError = True
         else:
             # Load Excel File and give path to your file
             datosLec = {}
+            resultado = "cp_Excel_bck: Step2.1, lanzar: cargar_datos_desde_excel"
+            print(resultado)
             datosLec = cargar_datos_desde_excel(src_file, shOrig)
-            resultado = "cp_Excel_bck, Step1.2, Correcto, Carga archivo origen"
-            stError = False
-            print(resultado + ' ' + fOrig)
-
+            if datosLec[shOrig].datositem() > 0:
+                resultado = "cp_Excel_bck: Step2.1, Correcto, Carga archivo origen excel"
+                stError = False
+                print(resultado + ' ' + fOrig)
+            else:
+                resultado = "cp_Excel_bck: Step2.1, Sin datos de la pestaña: " + shOrig
+                print(resultado)
                
     else:
-        resultado = "cp_Excel_bck: Error, Nombre vacio fichero origen/ruta origen/pestaña origen"
+        resultado = "cp_Excel_bck: Step2., Error, Nombre vacio fichero origen/ruta origen/pestaña origen"
         print(resultado)
         stError = True
 
     #3 paso) Escritura del df en un archivo excel
     if fDest is not nullcontext and shDest is not nullcontext and not stError:
-        print("cp_Excel_bck, Step2, tratamiento fichero destino: ", fDest)
+        print("cp_Excel_bck, Step3, tratamiento fichero destino: ", fDest)
         dst_file = os.path.join(rDest, fDest)
         if not os.path.exists(dst_file):
-            print(f"cp_Excel_bck: Error, el fichero destino no existe: {src_file}")
-            resultado = "cp_Excel_bck: Error, el fichero destino no existe"
+            print(f"cp_Excel_bck: Step3.1, Error, el fichero destino no existe: {src_file}")
+            resultado = "cp_Excel_bck: Step3.1, Error, el fichero destino no existe"
             stError = True
         else:
             #Escribir en fichero destino
@@ -194,13 +212,13 @@ def cp_Excel_bck( mi_parametros ):
             # datosEsc[shDest] = datosLec[shOrig]
             #escribir_datos_en_excel(dst_file, datosLec)
             copiar_hoja(src_file, shOrig, shDest, dst_file)
-            print(f"cp_Excel_bck: Datos copiados con éxito en el archivo destino: {dst_file}")
+            print(f"cp_Excel_bck: Step3.1, Datos copiados con éxito en el archivo destino: {dst_file}")
             #df_Filtro.to_excel(dst_file, sheet_name = shDest, index=False)
-            resultado = "cp_Excel_bck: Correcto, Escribe archivo destino"
+            resultado = "cp_Excel_bck: Step3, Correcto, Escribe archivo destino"
             stError = False
 
     else:
-        resultado = "cp_Excel_bckIncorrecto, hubo algun problema"
+        resultado = "cp_Excel_bck, Step3, Incorrecto, hubo algun problema"
         print(resultado + ' ' + dst_file)
         stError = True
         
@@ -228,13 +246,15 @@ def main():
     mytrazas = fg.Trazaslg(ftrazas)
     msg_trc = "actualizar_filtro_control.py"
     mytrazas.iniciar_traza(msg_trc)
-
+    print(msg_trc + ' - INICIO ejecución.')
     #Lectura del fichero de parámetros
     parametros = leer_parametros(fparametros)
-    print('actualizar_filtro_control.py - En ejecución.')
+    msg_trc = "actualizar_filtro_control.py - Paso 1º.- Lectura del fichero: " + archivo_parametros
+    mytrazas.registrar_msg_traza(msg_trc)
 
     # Paso 1. Carga parametros fichero
     #Parametros leidos de fichero
+    
     for ruta in parametros:
         if "RUTA_ARCHIVO_DESCARGAS" == ruta:
             ruta_archivo_descargas = str(parametros["RUTA_ARCHIVO_DESCARGAS"]).strip()
@@ -284,8 +304,7 @@ def main():
     prm_cp_bck["rBackup"] = ruta_archivo_backup
 
 
-    msg_trc = "actualizar_filtro_control.py - El archivo " + archivo_parametros + " no se encontro."
-    mytrazas.registrar_msg_traza(msg_trc)
+
     #Mostras valores del diccionario con el archivo de filtro
     #for llave in prm_cp_bck:
     #    #print("Llamada filtro: ", llave, ": ", prm_cp_bck[llave])
@@ -301,13 +320,13 @@ def main():
     #                        fDest = nombre_dst_filtro, shDest = dst_hoja)
     stResultadoErr = cp_Excel_bck( prm_cp_bck)
     if not stResultadoErr:
-        print(f'actualizar_filtro_control.py - Resultado de (cp_Excel_bck) copiar_planillas_backup: correcto.')
-        msg_trc = "actualizar_filtro_control.py - Resultado de (cp_Excel_bck) copiar_planillas_backup: correcto."
+        msg_trc = "actualizar_filtro_control.py - Paso 2º.- Resultado de (cp_Excel_bck) copiar_planillas_backup: correcto."
         mytrazas.registrar_msg_traza(msg_trc)
+        print(msg_trc)
     else:
-        print(f'actualizar_filtro_control.py - Resultado de (cp_Excel_bck) copiar_planillas_backup: stResultadoErr = {stResultadoErr}')
-        msg_err = "actualizar_filtro_control.py - Error (cp_Excel_bck) copiar_planillas_backup: stResultadoErr = " + str(stResultadoErr)
+        msg_err = "actualizar_filtro_control.py - Paso 2º.- Error (cp_Excel_bck) copiar_planillas_backup: stResultadoErr = " + str(stResultadoErr)
         mytrazas.registrar_err_traza(msg_err)
+        print(msg_err)
 
     #Paso 3.- Preparar la gestión del fichero Trello    
     stContinuar = str(input("Desea continuar (S/N): "))
@@ -333,16 +352,17 @@ def main():
 
         stResultadoErr = False
         stResultadoErr = cp_Excel_bck(prm_cp_bck)
-        print(f'actualizar_filtro_control.py - Actualización y copiado, Segundo archivo. stResultadoErrs = {stResultadoErr}')
-        msg_trc = "actualizar_filtro_control.py - Actualización y copiado, Segundo archivo. stResultadoErr " + str(stResultadoErr)
+        msg_trc = "actualizar_filtro_control.py - Paso 3º.- Actualización y copiado, Segundo archivo. stResultadoErr " + str(stResultadoErr)
         mytrazas.registrar_msg_traza(msg_trc)
+        print(msg_trc)
         msg_trc = "actualizar_filtro_control.py - Fin de la ejecución."
         mytrazas.finalizar_traza(msg_trc) 
+        print(msg_trc)
     else:
-        print("Finalizado.")
-        msg_trc = "actualizar_filtro_control.py - Fin de la ejecución."
+        msg_trc = "actualizar_filtro_control.py - FIN de la ejecución."
         mytrazas.finalizar_traza(msg_trc)
-        mytrazas.cerrar_traza()
+        print(msg_trc)
+        #mytrazas.cerrar_traza()
 
 
 
